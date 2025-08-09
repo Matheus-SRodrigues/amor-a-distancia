@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Para o amor não há distância</title>
+
+<!-- Fonte decorativa -->
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+
+<style>
+  /* RESET BÁSICO */
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to right, #d52b1e 50%, #009739 75%, #ffcc00 100%);
+    font-family: 'Segoe UI', sans-serif;
+    color: #fff;
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  /* TÍTULO PRINCIPAL */
+  #main-title {
+    font-family: 'Pacifico', cursive;
+    font-size: 3rem;
+    color: white;
+    text-shadow: 3px 3px 10px rgba(0,0,0,0.6);
+    text-align: center;
+    margin-top: 15px;
+    user-select: none;
+    padding: 0 10px;
+  }
+
+  /* CONTAINER DO GLOBO 3D */
+  #globe-container {
+    width: 100%;
+    height: 60vh;
+    position: relative;
+  }
+
+  /* CAIXA DE CONTAGEM REGRESSIVA */
+  #times {
+    background: rgba(255,255,255,0.95);
+    padding: 15px 25px;
+    border-radius: 12px;
+    font-weight: bold;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+    color: #004e64;
+    max-width: 320px;
+    margin: 20px auto;
+    position: relative;
+    z-index: 10010; /* Fica acima do player no mobile */
+  }
+
+  #times h2 {
+    text-align: center;
+    color: #004e64;
+    font-size: 1.4rem;
+    margin: 0 0 10px 0;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 5px;
+  }
+
+  .time-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+  }
+
+  .time-entry img {
+    width: 28px;
+    height: 18px;
+    border: 1px solid #ccc;
+  }
+
+  #time-br {
+    color: #009739;
+    text-shadow: 0 0 3px #ffcc00;
+  }
+
+  #time-cn {
+    color: #d52b1e;
+    text-shadow: 0 0 3px white;
+  }
+
+  /* MARCADORES NO GLOBO */
+  .marker {
+    position: absolute;
+    font-size: 2.2rem;
+    user-select: none;
+    pointer-events: none;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+    line-height: 1;
+  }
+
+  .label {
+    position: absolute;
+    font-weight: bold;
+    font-size: 0.85rem;
+    background: rgba(255,255,255,0.9);
+    padding: 3px 8px;
+    border-radius: 6px;
+    color: #004e64;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  /* Ajuste para não sobrepor emojis e labels */
+  .label-cn {
+    margin-left: 26px;
+  }
+  .label-br {
+    margin-left: 26px;
+  }
+
+  /* FOTO FLUTUANTE COM ARO ANIMADO */
+  #photo-wrapper {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    z-index: 10100; /* Fica acima de tudo */
+  }
+
+  #photo-wrapper::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    width: calc(100% + 8px);
+    height: calc(100% + 8px);
+    border-radius: 50%;
+    background: conic-gradient(#ffcc00, #d52b1e, #009739, #ffcc00);
+    animation: spin 4s linear infinite;
+    z-index: -1;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  #floating-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.9);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
+  }
+
+  #photo-wrapper:hover #floating-photo {
+    transform: scale(1.05);
+  }
+
+  /* PLAYER SPOTIFY EMBUTIDO */
+  #spotify-player {
+    display: none;
+    position: fixed;
+    bottom: 50px;
+    left: 10px;
+    width: 300px;
+    height: 80px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    z-index: 10000;
+  }
+
+  /* BOTÃO PARA ATIVAR SPOTIFY */
+  #btn-spotify-play {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: #1DB954;
+    border: none;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 12px 25px;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    z-index: 10001;
+    transition: background-color 0.3s ease;
+  }
+  #btn-spotify-play:hover {
+    background: #17a44c;
+  }
+
+  /* RESPONSIVIDADE */
+  @media (max-width: 768px) {
+    #main-title {
+      font-size: 2rem;
+    }
+
+    /* Empilha o contador e o player verticalmente, com espaço */
+    #times {
+      max-width: 90%;
+      font-size: 0.9rem;
+      margin: 20px auto 10px auto;
+      position: relative;
+      z-index: 10010; /* acima do player */
+      background: rgba(255,255,255,0.95);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    #times h2 {
+      font-size: 1.1rem;
+    }
+    .time-entry {
+      font-size: 1rem;
+    }
+    .marker {
+      font-size: 1.5rem;
+    }
+    .label {
+      font-size: 0.75rem;
+    }
+
+    /* Player Spotify embaixo e centralizado, menor largura */
+    #spotify-player {
+      left: 50%;
+      bottom: 60px;
+      width: 90%;
+      height: 80px;
+      transform: translateX(-50%);
+      z-index: 9999; /* abaixo do contador */
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    /* Botão para ativar Spotify centralizado e abaixo do contador */
+    #btn-spotify-play {
+      left: 50%;
+      bottom: 10px;
+      transform: translateX(-50%);
+      width: 90%;
+      padding: 12px 0;
+      font-size: 1rem;
+      z-index: 10001;
+      border-radius: 30px;
+    }
+
+    /* Foto flutuante deslocada para cima para não atrapalhar player e contador */
+    #photo-wrapper {
+      bottom: 150px;
+      right: 15px;
+      width: 80px;
+      height: 80px;
+    }
+  }
+
+  @media (max-width: 500px) {
+    #main-title {
+      font-size: 1.5rem;
+    }
+    #times {
+      padding: 10px 15px;
+      margin-bottom: 160px;
+    }
+    .time-entry img {
+      width: 20px;
+      height: 14px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="main-title">Para o amor não há distância</div>
+<div id="globe-container"></div>
+
+<!-- CONTADOR -->
+<div id="times">
+  <h2>CONTAGEM REGRESSIVA</h2>
+  <div class="time-entry">
+    <img src="https://upload.wikimedia.org/wikipedia/en/0/05/Flag_of_Brazil.svg" alt="Brasil" />
+    <span id="time-br">--:--:--</span>
+  </div>
+  <div class="time-entry">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Flag_of_the_People%27s_Republic_of_China.svg" alt="China" />
+    <span id="time-cn">--:--:--</span>
+  </div>
+  <div>Partida: <span id="days-ida">--</span> dias restantes (28/08/2025)</div>
+  <div>Reencontro: <span id="days-volta">--</span> dias restantes (28/08/2026)</div>
+</div>
+
+<!-- FOTO FLUTUANTE -->
+<div id="photo-wrapper">
+  <img id="floating-photo" src="imgs/516076653_1944999142932508_1722866958845302284_n.jpg" alt="Foto do casal" />
+</div>
+
+<!-- BOTÃO PARA ATIVAR SPOTIFY -->
+<button id="btn-spotify-play" aria-label="Tocar música no Spotify">Tocar Música 🎵</button>
+
+<!-- PLAYER SPOTIFY EMBUTIDO -->
+<iframe 
+  id="spotify-player" 
+  src="https://open.spotify.com/embed/track/6bmdS45trR3N3xYoydgcvH?utm_source=generator" 
+  frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
+</iframe>
+
+<!-- THREE.JS -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+
+<script>
+  // CONFIGURAÇÃO DO GLOBO 3D
+  const container = document.getElementById('globe-container');
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, container.clientWidth/container.clientHeight, 0.1, 1000);
+  camera.position.z = 400;
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  container.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  directionalLight.position.set(100, 100, 100);
+  scene.add(directionalLight);
+
+  const textureLoader = new THREE.TextureLoader();
+  const earthTexture = textureLoader.load('https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg');
+  const globe = new THREE.Mesh(
+    new THREE.SphereGeometry(200, 64, 64), 
+    new THREE.MeshPhongMaterial({ map: earthTexture })
+  );
+  scene.add(globe);
+
+  function createGridLines(radius) {
+    const material = new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.2, transparent: true });
+    const lines = new THREE.Group();
+    for(let i = -80; i <= 80; i += 20){
+      const lat = THREE.MathUtils.degToRad(i);
+      const points = [];
+      for(let j = 0; j <= 360; j += 5){
+        const lng = THREE.MathUtils.degToRad(j);
+        const x = radius * Math.cos(lat) * Math.cos(lng);
+        const y = radius * Math.sin(lat);
+        const z = radius * Math.cos(lat) * Math.sin(lng);
+        points.push(new THREE.Vector3(x, y, z));
+      }
+      lines.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material));
+    }
+    for(let i = 0; i < 360; i += 20){
+      const lng = THREE.MathUtils.degToRad(i);
+      const points = [];
+      for(let j = -90; j <= 90; j += 5){
+        const lat = THREE.MathUtils.degToRad(j);
+        const x = radius * Math.cos(lat) * Math.cos(lng);
+        const y = radius * Math.sin(lat);
+        const z = radius * Math.cos(lat) * Math.sin(lng);
+        points.push(new THREE.Vector3(x, y, z));
+      }
+      lines.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material));
+    }
+    return lines;
+  }
+  scene.add(createGridLines(201));
+
+  const markersData = [
+    { lat: 39.9042, lng: 116.4074, emoji: '🇨🇳👨🏻‍⚖️', label: 'Zé (China)', labelClass: 'label-cn' },
+    { lat: -22.9339, lng: -43.2031, emoji: '🇧🇷👩🏻‍🎨', label: 'Victor (Brasil)', labelClass: 'label-br' }
+  ];
+  markersData.forEach(m => {
+    m.el = document.createElement('div');
+    m.el.className = 'marker';
+    m.el.textContent = m.emoji;
+    container.appendChild(m.el);
+
+    m.labelEl = document.createElement('div');
+    m.labelEl.className = 'label ' + m.labelClass;
+    m.labelEl.textContent = m.label;
+    container.appendChild(m.labelEl);
+  });
+  function latLngToVector3(lat, lng, radius = 200) {
+    const phi = (90 - lat) * Math.PI / 180;
+    const theta = (lng + 180) * Math.PI / 180;
+    const x = -radius * Math.sin(phi) * Math.cos(theta);
+    const y = radius * Math.cos(phi);
+    const z = radius * Math.sin(phi) * Math.sin(theta);
+    return new THREE.Vector3(x, y, z);
+  }
+  function updateMarkers() {
+    markersData.forEach(m => {
+      const pos3D = latLngToVector3(m.lat, m.lng, 200);
+      pos3D.applyAxisAngle(new THREE.Vector3(0,1,0), globe.rotation.y);
+      const projected = pos3D.clone().project(camera);
+      const x = (projected.x + 1) / 2 * container.clientWidth;
+      const y = (-projected.y + 1) / 2 * container.clientHeight;
+      const visible = projected.z < 1;
+      if(visible){
+        m.el.style.display = 'block';
+        m.el.style.left = `${x - 18}px`;
+        m.el.style.top = `${y - 18}px`;
+        m.labelEl.style.display = 'block';
+        m.labelEl.style.left = `${x + 26}px`;
+        m.labelEl.style.top = `${y - 8}px`;
+      } else {
+        m.el.style.display = 'none';
+        m.labelEl.style.display = 'none';
+      }
+    });
+  }
+
+  function daysUntil(targetDate) {
+    const now = new Date();
+    const diff = targetDate.getTime() - now.getTime();
+    return diff > 0 ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : 0;
+  }
+  function updateTime() {
+    const now = new Date();
+    const optionsBR = { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const optionsCN = { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    document.getElementById('time-br').textContent = now.toLocaleTimeString('pt-BR', optionsBR);
+    document.getElementById('time-cn').textContent = now.toLocaleTimeString('pt-BR', optionsCN);
+    document.getElementById('days-ida').textContent = daysUntil(new Date('2025-08-28T00:00:00'));
+    document.getElementById('days-volta').textContent = daysUntil(new Date('2026-08-28T00:00:00'));
+  }
+  setInterval(updateTime, 1000);
+  updateTime();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    globe.rotation.y += 0.0012;
+    updateMarkers();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  });
+
+  // CONTROLE DO PLAYER SPOTIFY
+  const btnSpotifyPlay = document.getElementById('btn-spotify-play');
+  const spotifyPlayer = document.getElementById('spotify-player');
+
+  btnSpotifyPlay.addEventListener('click', () => {
+    if (spotifyPlayer.style.display === 'none' || spotifyPlayer.style.display === '') {
+      spotifyPlayer.style.display = 'block';
+      btnSpotifyPlay.textContent = 'Parar Música ✖️';
+    } else {
+      spotifyPlayer.style.display = 'none';
+      btnSpotifyPlay.textContent = 'Tocar Música 🎵';
+    }
+  });
+</script>
+
+</body>
+</html>
